@@ -1,10 +1,43 @@
-```html id="n5x8kc"
-<div id="chess-news-widget"></div>
+```html id="d8v4ra"
+<div id="news-preview-wrapper">
+
+    <div id="preview-header">
+        ♟ Chess.com News
+    </div>
+
+    <div id="loading">
+        Đang tải tin tức...
+    </div>
+
+    <div id="chess-news-widget"></div>
+
+</div>
 
 <style>
-#chess-news-widget{
-    width:340px;
+#news-preview-wrapper{
+    width:360px;
+    background:#111;
+    border:1px solid #2f2f2f;
+    border-radius:18px;
+    padding:12px;
     font-family:Arial,sans-serif;
+    box-shadow:0 0 18px rgba(0,0,0,.35);
+}
+
+#preview-header{
+    color:white;
+    font-size:18px;
+    font-weight:700;
+    margin-bottom:14px;
+}
+
+#loading{
+    color:#aaa;
+    text-align:center;
+    padding:20px;
+}
+
+#chess-news-widget{
     display:flex;
     flex-direction:column;
     gap:10px;
@@ -13,7 +46,7 @@
 .news-card{
     display:flex;
     gap:10px;
-    background:#1f1f1f;
+    background:#1c1c1c;
     border:1px solid #333;
     border-radius:14px;
     overflow:hidden;
@@ -25,12 +58,12 @@
 
 .news-card:hover{
     transform:scale(1.02);
-    background:#2a2a2a;
+    background:#292929;
 }
 
 .news-thumb{
-    width:110px;
-    height:70px;
+    width:115px;
+    height:75px;
     object-fit:cover;
     border-radius:10px;
     flex-shrink:0;
@@ -40,6 +73,7 @@
     display:flex;
     flex-direction:column;
     justify-content:center;
+    overflow:hidden;
 }
 
 .news-title{
@@ -47,37 +81,46 @@
     font-size:14px;
     font-weight:700;
     line-height:1.3;
-    margin-bottom:6px;
+    margin-bottom:5px;
+
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+}
+
+.news-desc{
+    color:#b0b0b0;
+    font-size:12px;
+    line-height:1.3;
+
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
 }
 
 .news-time{
-    color:#9aa0a6;
-    font-size:12px;
-}
-
-.news-loading{
-    color:white;
-    text-align:center;
-    padding:20px;
+    color:#7d7d7d;
+    font-size:11px;
+    margin-top:6px;
 }
 </style>
-
-<div class="news-loading" id="loading">
-Đang tải tin tức...
-</div>
 
 <script>
 const container = document.getElementById("chess-news-widget");
 const loading = document.getElementById("loading");
 
-async function loadNews() {
-    try {
+async function loadNews(){
 
-        // Dùng RSS của Chess.com
-        const rssUrl = "https://www.chess.com/news/rss";
+    try{
 
-        // Convert RSS -> JSON
-        const api = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl);
+        const rssUrl =
+        "https://www.chess.com/news/rss";
+
+        const api =
+        "https://api.rss2json.com/v1/api.json?rss_url="
+        + encodeURIComponent(rssUrl);
 
         const response = await fetch(api);
         const data = await response.json();
@@ -87,36 +130,70 @@ async function loadNews() {
 
         data.items.slice(0,3).forEach(news => {
 
-            // thumbnail fallback
             let thumb = news.thumbnail;
 
-            if(!thumb || thumb === ""){
-                thumb = "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpx2LJvE.png";
+            if(!thumb){
+                thumb =
+                "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/PedroPinhata/phpx2LJvE.png";
             }
 
+            const parser = document.createElement("div");
+            parser.innerHTML = news.description;
+
+            let preview =
+            parser.textContent
+            .replace(/\s+/g," ")
+            .trim()
+            .substring(0,100);
+
+            if(preview.length >= 100){
+                preview += "...";
+            }
+
+            const date =
+            new Date(news.pubDate)
+            .toLocaleString();
+
             container.innerHTML += `
-            <a class="news-card" href="${news.link}" target="_blank">
-                <img class="news-thumb" src="${thumb}">
+            <a class="news-card"
+               href="${news.link}"
+               target="_blank">
+
+                <img class="news-thumb"
+                     src="${thumb}">
+
                 <div class="news-info">
-                    <div class="news-title">${news.title}</div>
-                    <div class="news-time">
-                        ${new Date(news.pubDate).toLocaleString()}
+
+                    <div class="news-title">
+                        ${news.title}
                     </div>
+
+                    <div class="news-desc">
+                        ${preview}
+                    </div>
+
+                    <div class="news-time">
+                        ${date}
+                    </div>
+
                 </div>
+
             </a>
             `;
         });
 
-    } catch(err){
-        loading.innerHTML = "Không tải được news.";
-        console.error(err);
+    } catch(error){
+
+        loading.innerHTML =
+        "Không tải được news.";
+
+        console.error(error);
     }
 }
 
-// load lần đầu
 loadNews();
 
-// tự cập nhật mỗi 5 phút
-setInterval(loadNews, 300000);
+// auto update mỗi 5 phút
+setInterval(loadNews,300000);
 </script>
 ```
